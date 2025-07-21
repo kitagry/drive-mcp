@@ -5,6 +5,7 @@ A Go implementation of MCP (Model Context Protocol) server for Google Drive, Goo
 ## Features
 
 - Search Google Drive files
+- List files in Google Drive folders
 - Read Google Document content
 - Update Google Document content
 - Read Google Slides presentation content
@@ -69,6 +70,35 @@ Search for files in Google Drive.
   "arguments": {
     "query": "meeting notes",
     "maxResults": 5
+  }
+}
+```
+
+#### list_files
+
+List files in a Google Drive folder.
+
+**Parameters:**
+- `folderId` (optional): The ID of the folder to list files from. If empty, lists files in My Drive root
+- `maxResults` (optional, default: 10): Maximum number of files to retrieve
+
+**Example:**
+```json
+{
+  "name": "list_files",
+  "arguments": {
+    "folderId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+    "maxResults": 20
+  }
+}
+```
+
+**Example (My Drive root):**
+```json
+{
+  "name": "list_files",
+  "arguments": {
+    "maxResults": 10
   }
 }
 ```

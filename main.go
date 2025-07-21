@@ -40,6 +40,33 @@ func createSearchFilesHandler(driveService *DriveService) func(context.Context, 
 	}
 }
 
+func createListFilesHandler(driveService *DriveService) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		// Get parameters
+		folderID := mcp.ParseString(request, "folderId", "")
+		maxResults := mcp.ParseInt(request, "maxResults", 10)
+
+		// Execute Google Drive list
+		files, err := driveService.ListFiles(ctx, folderID, maxResults)
+		if err != nil {
+			return mcp.NewToolResultError("Failed to list files: " + err.Error()), nil
+		}
+
+		// Convert result to JSON
+		result := map[string]any{
+			"files": files,
+			"count": len(files),
+		}
+
+		resultData, err := json.Marshal(result)
+		if err != nil {
+			return mcp.NewToolResultError("Failed to serialize result: " + err.Error()), nil
+		}
+
+		return mcp.NewToolResultText(string(resultData)), nil
+	}
+}
+
 func createGetDocumentHandler(driveService *DriveService) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		// Get parameters
@@ -147,6 +174,14 @@ func main() {
 		mcp.WithNumber("maxResults", mcp.Description("Maximum number of files to retrieve (default: 10)"), mcp.DefaultNumber(10)),
 	)
 
+	// Define list files tool
+	listFilesTool := mcp.NewTool(
+		"list_files",
+		mcp.WithDescription("List files in a Google Drive folder"),
+		mcp.WithString("folderId", mcp.Description("The ID of the folder to list files from. If empty, lists files in My Drive root")),
+		mcp.WithNumber("maxResults", mcp.Description("Maximum number of files to retrieve (default: 10)"), mcp.DefaultNumber(10)),
+	)
+
 	// Define get document tool
 	getDocumentTool := mcp.NewTool(
 		"get_document",
@@ -181,6 +216,7 @@ func main() {
 
 	// Register tool handlers
 	s.AddTool(searchFilesTool, createSearchFilesHandler(driveService))
+	s.AddTool(listFilesTool, createListFilesHandler(driveService))
 	s.AddTool(getDocumentTool, createGetDocumentHandler(driveService))
 	s.AddTool(updateDocumentTool, createUpdateDocumentHandler(driveService))
 	s.AddTool(getPresentationTool, createGetPresentationHandler(driveService))

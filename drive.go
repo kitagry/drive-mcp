@@ -90,6 +90,41 @@ func (ds *DriveService) SearchFiles(ctx context.Context, query string, maxResult
 	return files, nil
 }
 
+// ListFiles lists files in a Google Drive folder
+func (ds *DriveService) ListFiles(ctx context.Context, folderID string, maxResults int) ([]DriveFile, error) {
+	// Build query for listing files in folder
+	var query string
+	if folderID == "" {
+		// List files in root folder (My Drive)
+		query = "'root' in parents and trashed = false"
+	} else {
+		// List files in specific folder
+		query = fmt.Sprintf("'%s' in parents and trashed = false", folderID)
+	}
+
+	// Execute list with Google Drive API
+	r, err := ds.driveService.Files.List().
+		Q(query).
+		PageSize(int64(maxResults)).
+		Fields("nextPageToken, files(id, name, mimeType)").
+		Context(ctx).
+		Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files: %w", err)
+	}
+
+	var files []DriveFile
+	for _, file := range r.Files {
+		files = append(files, DriveFile{
+			ID:   file.Id,
+			Name: file.Name,
+			Type: file.MimeType,
+		})
+	}
+
+	return files, nil
+}
+
 // GetDocumentContent retrieves the content of a Google Document
 func (ds *DriveService) GetDocumentContent(ctx context.Context, documentID string) (string, error) {
 	if documentID == "" {
