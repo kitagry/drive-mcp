@@ -9,6 +9,7 @@ import (
 	"google.golang.org/api/docs/v1"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
+	"google.golang.org/api/sheets/v4"
 	"google.golang.org/api/slides/v1"
 )
 
@@ -19,18 +20,19 @@ type DriveFile struct {
 	Type string `json:"mimeType"`
 }
 
-// DriveService manages Google Drive, Docs, and Slides API services
+// DriveService manages Google Drive, Docs, Slides, and Sheets API services
 type DriveService struct {
 	driveService  *drive.Service
 	docsService   *docs.Service
 	slidesService *slides.Service
+	sheetsService *sheets.Service
 }
 
 // NewDriveService creates a new DriveService
 func NewDriveService(ctx context.Context) (*DriveService, error) {
 	// Use gcloud application-default credentials
 	options := []option.ClientOption{
-		option.WithScopes(drive.DriveScope, docs.DocumentsScope, slides.PresentationsScope),
+		option.WithScopes(drive.DriveScope, docs.DocumentsScope, slides.PresentationsScope, sheets.SpreadsheetsScope),
 	}
 
 	// Use quota project if set in environment variable
@@ -53,10 +55,16 @@ func NewDriveService(ctx context.Context) (*DriveService, error) {
 		return nil, fmt.Errorf("failed to create slides service: %w", err)
 	}
 
+	sheetsService, err := sheets.NewService(ctx, options...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create sheets service: %w", err)
+	}
+
 	return &DriveService{
 		driveService:  driveService,
 		docsService:   docsService,
 		slidesService: slidesService,
+		sheetsService: sheetsService,
 	}, nil
 }
 
@@ -315,6 +323,47 @@ func (ds *DriveService) UpdatePresentationSlide(ctx context.Context, presentatio
 		if err != nil {
 			return fmt.Errorf("failed to update presentation: %w", err)
 		}
+	}
+
+	return nil
+}
+
+// GetSpreadsheetValues retrieves values from a Google Spreadsheet
+func (ds *DriveService) GetSpreadsheetValues(ctx context.Context, spreadsheetID, rangeName string) ([][]interface{}, error) {
+	if spreadsheetID == "" {
+		return nil, errors.New("spreadsheet ID is empty")
+	}
+	if rangeName == "" {
+		return nil, errors.New("range name is empty")
+	}
+
+	resp, err := ds.sheetsService.Spreadsheets.Values.Get(spreadsheetID, rangeName).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get spreadsheet values: %w", err)
+	}
+
+	return resp.Values, nil
+}
+
+// UpdateSpreadsheetValues updates values in a Google Spreadsheet
+func (ds *DriveService) UpdateSpreadsheetValues(ctx context.Context, spreadsheetID, rangeName string, values [][]interface{}) error {
+	if spreadsheetID == "" {
+		return errors.New("spreadsheet ID is empty")
+	}
+	if rangeName == "" {
+		return errors.New("range name is empty")
+	}
+
+	valueRange := &sheets.ValueRange{
+		Values: values,
+	}
+
+	_, err := ds.sheetsService.Spreadsheets.Values.Update(spreadsheetID, rangeName, valueRange).
+		ValueInputOption("USER_ENTERED").
+		Context(ctx).
+		Do()
+	if err != nil {
+		return fmt.Errorf("failed to update spreadsheet values: %w", err)
 	}
 
 	return nil

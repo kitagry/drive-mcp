@@ -1,6 +1,6 @@
 # Drive MCP
 
-A Go implementation of MCP (Model Context Protocol) server for Google Drive, Google Docs, and Google Slides operations.
+A Go implementation of MCP (Model Context Protocol) server for Google Drive, Google Docs, Google Slides, and Google Sheets operations.
 
 ## Features
 
@@ -10,6 +10,8 @@ A Go implementation of MCP (Model Context Protocol) server for Google Drive, Goo
 - Update Google Document content
 - Read Google Slides presentation content
 - Update Google Slides presentation slides
+- Read Google Sheets values
+- Update Google Sheets values
 - Authentication using gcloud application-default credentials
 
 ## Setup
@@ -18,14 +20,15 @@ A Go implementation of MCP (Model Context Protocol) server for Google Drive, Goo
 
 - Go 1.21 or later
 - Google Cloud CLI (`gcloud`)
-- GCP project with Google Drive API, Google Docs API, and Google Slides API enabled
+- GCP project with Google Drive API, Google Docs API, Google Slides API, and Google Sheets API enabled
 
 ### Authentication Setup
 
-1. Enable Google Drive API, Google Docs API, and Google Slides API
+1. Enable Google Drive API, Google Docs API, Google Slides API, and Google Sheets API
     * https://console.cloud.google.com/apis/library/drive.googleapis.com
     * https://console.cloud.google.com/apis/library/docs.googleapis.com
     * https://console.cloud.google.com/apis/library/slides.googleapis.com
+    * https://console.cloud.google.com/apis/library/sheets.googleapis.com
 2. Run gcloud authentication:
 
 ```bash
@@ -179,6 +182,49 @@ Update a specific slide in a Google Slides presentation.
 }
 ```
 
+#### get_spreadsheet
+
+Get values from a Google Spreadsheet.
+
+**Parameters:**
+- `spreadsheetId` (required): The ID of the Google Spreadsheet
+- `range` (required): The range to retrieve (e.g., 'Sheet1!A1:C10')
+
+**Example:**
+```json
+{
+  "name": "get_spreadsheet",
+  "arguments": {
+    "spreadsheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+    "range": "Sheet1!A1:C10"
+  }
+}
+```
+
+#### update_spreadsheet
+
+Update values in a Google Spreadsheet.
+
+**Parameters:**
+- `spreadsheetId` (required): The ID of the Google Spreadsheet
+- `range` (required): The range to update (e.g., 'Sheet1!A1:C10')
+- `values` (required): 2D array of values to write
+
+**Example:**
+```json
+{
+  "name": "update_spreadsheet",
+  "arguments": {
+    "spreadsheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+    "range": "Sheet1!A1:C2",
+    "values": [
+      ["Name", "Age", "City"],
+      ["John", "30", "Tokyo"]
+    ]
+  }
+}
+```
+
 ## Testing
 
 ```bash
@@ -187,7 +233,7 @@ go test -v
 
 ## Structure
 
-- `drive.go` - Google Drive, Docs, and Slides API operations implementation
+- `drive.go` - Google Drive, Docs, Slides, and Sheets API operations implementation
 - `main.go` - MCP server entry point with tool handlers
 
 ## License
