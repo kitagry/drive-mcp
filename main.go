@@ -190,47 +190,47 @@ func createGetSpreadsheetHandler(driveService *DriveService) func(context.Contex
 	}
 }
 
-func createUpdateSpreadsheetHandler(driveService *DriveService) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		// Get parameters
-		spreadsheetID, err := request.RequireString("spreadsheetId")
-		if err != nil {
-			return mcp.NewToolResultError("Parameter 'spreadsheetId' is required"), nil
-		}
-
-		rangeName, err := request.RequireString("range")
-		if err != nil {
-			return mcp.NewToolResultError("Parameter 'range' is required"), nil
-		}
-
-		valuesParam := request.Params["values"]
-		if valuesParam == nil {
-			return mcp.NewToolResultError("Parameter 'values' is required"), nil
-		}
-
-		// Convert values to [][]interface{}
-		var values [][]interface{}
-		if valuesSlice, ok := valuesParam.([]interface{}); ok {
-			for _, row := range valuesSlice {
-				if rowSlice, ok := row.([]interface{}); ok {
-					values = append(values, rowSlice)
-				} else {
-					return mcp.NewToolResultError("Invalid values format: each row must be an array"), nil
-				}
-			}
-		} else {
-			return mcp.NewToolResultError("Invalid values format: values must be a 2D array"), nil
-		}
-
-		// Update spreadsheet values
-		err = driveService.UpdateSpreadsheetValues(ctx, spreadsheetID, rangeName, values)
-		if err != nil {
-			return mcp.NewToolResultError("Failed to update spreadsheet: " + err.Error()), nil
-		}
-
-		return mcp.NewToolResultText("Spreadsheet updated successfully"), nil
-	}
-}
+// func createUpdateSpreadsheetHandler(driveService *DriveService) func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+// 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+// 		// Get parameters
+// 		spreadsheetID, err := request.RequireString("spreadsheetId")
+// 		if err != nil {
+// 			return mcp.NewToolResultError("Parameter 'spreadsheetId' is required"), nil
+// 		}
+//
+// 		rangeName, err := request.RequireString("range")
+// 		if err != nil {
+// 			return mcp.NewToolResultError("Parameter 'range' is required"), nil
+// 		}
+//
+// 		valuesParam := request.Params["values"]
+// 		if valuesParam == nil {
+// 			return mcp.NewToolResultError("Parameter 'values' is required"), nil
+// 		}
+//
+// 		// Convert values to [][]interface{}
+// 		var values [][]interface{}
+// 		if valuesSlice, ok := valuesParam.([]interface{}); ok {
+// 			for _, row := range valuesSlice {
+// 				if rowSlice, ok := row.([]interface{}); ok {
+// 					values = append(values, rowSlice)
+// 				} else {
+// 					return mcp.NewToolResultError("Invalid values format: each row must be an array"), nil
+// 				}
+// 			}
+// 		} else {
+// 			return mcp.NewToolResultError("Invalid values format: values must be a 2D array"), nil
+// 		}
+//
+// 		// Update spreadsheet values
+// 		err = driveService.UpdateSpreadsheetValues(ctx, spreadsheetID, rangeName, values)
+// 		if err != nil {
+// 			return mcp.NewToolResultError("Failed to update spreadsheet: " + err.Error()), nil
+// 		}
+//
+// 		return mcp.NewToolResultText("Spreadsheet updated successfully"), nil
+// 	}
+// }
 
 func main() {
 	// Initialize Drive service once
@@ -299,13 +299,13 @@ func main() {
 	)
 
 	// Define update spreadsheet tool
-	updateSpreadsheetTool := mcp.NewTool(
-		"update_spreadsheet",
-		mcp.WithDescription("Update values in a Google Spreadsheet"),
-		mcp.WithString("spreadsheetId", mcp.Description("The ID of the Google Spreadsheet"), mcp.Required()),
-		mcp.WithString("range", mcp.Description("The range to update (e.g., 'Sheet1!A1:C10')"), mcp.Required()),
-		mcp.WithAny("values", mcp.Description("2D array of values to write"), mcp.Required()),
-	)
+	// updateSpreadsheetTool := mcp.NewTool(
+	// 	"update_spreadsheet",
+	// 	mcp.WithDescription("Update values in a Google Spreadsheet"),
+	// 	mcp.WithString("spreadsheetId", mcp.Description("The ID of the Google Spreadsheet"), mcp.Required()),
+	// 	mcp.WithString("range", mcp.Description("The range to update (e.g., 'Sheet1!A1:C10')"), mcp.Required()),
+	// 	mcp.WithAny("values", mcp.Description("2D array of values to write"), mcp.Required()),
+	// )
 
 	// Register tool handlers
 	s.AddTool(searchFilesTool, createSearchFilesHandler(driveService))
@@ -315,7 +315,7 @@ func main() {
 	s.AddTool(getPresentationTool, createGetPresentationHandler(driveService))
 	s.AddTool(updatePresentationTool, createUpdatePresentationHandler(driveService))
 	s.AddTool(getSpreadsheetTool, createGetSpreadsheetHandler(driveService))
-	s.AddTool(updateSpreadsheetTool, createUpdateSpreadsheetHandler(driveService))
+	// s.AddTool(updateSpreadsheetTool, createUpdateSpreadsheetHandler(driveService))
 
 	// Start server
 	if err := server.ServeStdio(s); err != nil {
